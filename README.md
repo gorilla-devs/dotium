@@ -17,7 +17,7 @@ Dotium is the provider of uniform Mod hosting platform objects, that get traits 
 ```
   ╔════════╗ ╔════════╗     | Interfaces for Libium, both as CLI as GUI.
   ║ Carbon ║ ║ Ferium ║     | Ferium: CLI version written using Clap.
-  ╚════╤═══╝ ╚═══╤════╝     | Carbon: GUI version using electron, written in SolidJS
+  ╚════╤═══╝ ╚═══╤════╝     | Carbon: GUI version using Tauri, written in SolidJS
        │         │
        ╰────┬────╯
             │
