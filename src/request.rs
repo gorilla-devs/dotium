@@ -1,23 +1,80 @@
+use std::collections::HashMap;
+
 use super::*;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Asset {
     /// The request URL
-    url: String,
-    /// Name of the asset 
-    name: Option<String>,
+    pub url: String,
+    /// Name of the asset
+    pub name: Option<String>,
     /// Description of the asset
-    description: Option<String>,
-    /// Headers to send with the request
-    headers: Option<String>,
+    pub description: Option<String>,
+    /// Additional headers to send with the request
+    pub headers: HashMap<String, String>,
     /// Request type
-    request_type: RequestType,
+    pub request_type: RequestType,
+    /// Hashes to check
+    pub hash: Option<AssetHash>,
+    /// Optional size of file in bytes
+    pub size: Option<usize>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
+impl Asset {
+    pub fn by_description(url: String, name: String, description: String) -> Self {
+        Self {
+            url,
+            name: Some(name),
+            description: Some(description),
+            headers: HashMap::new(),
+            request_type: RequestType::GET,
+            hash: None,
+            size: None,
+        }
+    }
+
+    pub fn by_name(url: String, name: String) -> Self {
+        Self {
+            url,
+            name: Some(name),
+            description: None,
+            headers: HashMap::new(),
+            request_type: RequestType::GET,
+            hash: None,
+            size: None,
+        }
+    }
+
+    pub fn by_url(url: String) -> Self {
+        Self {
+            url,
+            name: None,
+            description: None,
+            headers: HashMap::new(),
+            request_type: RequestType::GET,
+            hash: None,
+            size: None,
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum RequestType {
     GET,
     POST,
     PATCH,
     DELETE,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct AssetHash {
+    pub hash: String,
+    pub algorithm: HashAlgorithm,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub enum HashAlgorithm {
+    Sha1,
+    Sha512,
+    Md5,
 }
