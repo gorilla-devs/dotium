@@ -45,7 +45,7 @@ pub struct Project {
     pub team_id: String,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum Type {
     Mod,
     Modpack,
@@ -88,7 +88,7 @@ pub struct ProjectRequirements {
 }
 
 /// Requirement status
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum Requirement {
     Required,
     Optional,
@@ -97,7 +97,7 @@ pub enum Requirement {
 }
 
 /// Status of a Project
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum Status {
     /// Modrinth: Draft
     New,

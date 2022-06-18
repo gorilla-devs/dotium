@@ -21,11 +21,11 @@ pub struct Asset {
 }
 
 impl Asset {
-    pub fn by_description(url: String, name: String, description: String) -> Self {
+    pub fn by_description(url: &str, name: &str, description: &str) -> Self {
         Self {
-            url,
-            name: Some(name),
-            description: Some(description),
+            url: url.to_string(),
+            name: Some(name.to_string()),
+            description: Some(description.to_string()),
             headers: HashMap::new(),
             request_type: RequestType::GET,
             hash: None,
@@ -33,10 +33,10 @@ impl Asset {
         }
     }
 
-    pub fn by_name(url: String, name: String) -> Self {
+    pub fn by_name(url: &str, name: &str) -> Self {
         Self {
-            url,
-            name: Some(name),
+            url: url.to_string(),
+            name: Some(name.to_string()),
             description: None,
             headers: HashMap::new(),
             request_type: RequestType::GET,
@@ -45,9 +45,9 @@ impl Asset {
         }
     }
 
-    pub fn by_url(url: String) -> Self {
+    pub fn by_url(url: &str) -> Self {
         Self {
-            url,
+            url: url.to_string(),
             name: None,
             description: None,
             headers: HashMap::new(),
@@ -58,7 +58,7 @@ impl Asset {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum RequestType {
     GET,
     POST,
@@ -72,7 +72,7 @@ pub struct AssetHash {
     pub algorithm: HashAlgorithm,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum HashAlgorithm {
     Sha1,
     Sha512,

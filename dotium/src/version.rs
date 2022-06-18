@@ -41,17 +41,17 @@ pub struct VersionDependency {
     pub dependency_type: DependencyType,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum DependencyType {
     EmbeddedLibrary,
     OptionalDependency,
-    ReqquiredDependency,
+    RequiredDependency,
     Tool,
     Incompatible,
     Include,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum ModLoader {
     Quilt,
@@ -59,9 +59,10 @@ pub enum ModLoader {
     Forge,
     Rift,
     Modloader,
+    Unkown,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum VersionType {
     Alpha,
