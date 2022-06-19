@@ -1,16 +1,16 @@
 use super::*;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Project {
+pub struct Project<ID> {
     /// The project's ID
-    pub id: String,
+    pub id: ID,
     /// The project's slug
     pub slug: String,
     /// The project's type
-    pub project_type: Type,
+    pub project_type: ProjectType,
     /// The project's Name
     pub name: String,
-    /// The Description of the project
+    /// The description of the project
     pub description: String,
     /// Links to external project pages
     pub links: Links,
@@ -46,7 +46,7 @@ pub struct Project {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
-pub enum Type {
+pub enum ProjectType {
     Mod,
     Modpack,
     Ressourcepack,
@@ -57,25 +57,25 @@ pub enum Type {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Links {
-    ///A link to the mod's GitHub page
+    /// GitHub page
     pub github: Option<String>,
-    ///A link to the mod's issue tracker
+    /// Issue tracker
     pub issues: Option<String>,
-    ///A link to the mod's wiki
+    /// Wiki page
     pub wiki: Option<String>,
-    ///A link to the mod's discord
+    /// Discord invite
     pub discord: Option<String>,
-    ///An array of to the mod's donation platforms
-    pub donations: Option<Vec<DonationLink>>,
+    /// Donation platforms
+    pub donations: Vec<DonationLink>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct DonationLink {
-    ///The platform ID
+    /// The platform's ID
     pub id: String,
-    ///The platform name
+    /// The platform name
     pub platform: String,
-    ///The link to the donations page of the platform
+    /// The link to the donations page
     pub url: String,
 }
 
@@ -93,10 +93,12 @@ pub enum Requirement {
     Required,
     Optional,
     Unsupported,
-    Unkown,
+    Unknown,
 }
 
 /// Status of a Project
+
+// We should combine some of these (e.g. Abandoned & Inactive)
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum Status {
     /// Modrinth: Draft
@@ -124,13 +126,13 @@ pub enum Status {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Author {
+pub struct Author<ID> {
     /// The unique username of the user
     pub username: String,
     /// The display name of the user
     pub name: String,
     // The ID of the user
-    pub id: String,
-    /// The Avatar URL of the user
+    pub id: ID,
+    /// The user's avatar
     pub avatar_url: Option<request::Asset>,
 }

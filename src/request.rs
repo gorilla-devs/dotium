@@ -74,7 +74,7 @@ pub struct AssetHash {
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum HashAlgorithm {
-    Sha1,
-    Sha512,
-    Md5,
+    SHA1,
+    SHA512,
+    MD5,
 }
