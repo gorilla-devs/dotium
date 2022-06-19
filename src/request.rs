@@ -1,12 +1,12 @@
-use std::collections::HashMap;
-
 use super::*;
+use std::collections::HashMap;
+use url::Url;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Asset {
-    /// The request URL
-    pub url: String,
-    /// Name of the asset
+    /// The request Url
+    pub url: Url,
+    /// Name of the asset, usually the filename
     pub name: Option<String>,
     /// Description of the asset
     pub description: Option<String>,
@@ -21,11 +21,11 @@ pub struct Asset {
 }
 
 impl Asset {
-    pub fn by_description(url: &str, name: &str, description: &str) -> Self {
+    pub fn by_description(url: Url, name: Option<String>, description: Option<String>) -> Self {
         Self {
-            url: url.to_string(),
-            name: Some(name.to_string()),
-            description: Some(description.to_string()),
+            url,
+            name,
+            description,
             headers: HashMap::new(),
             request_type: RequestType::GET,
             hash: None,
@@ -33,10 +33,10 @@ impl Asset {
         }
     }
 
-    pub fn by_name(url: &str, name: &str) -> Self {
+    pub fn by_name(url: Url, name: Option<String>) -> Self {
         Self {
-            url: url.to_string(),
-            name: Some(name.to_string()),
+            url,
+            name,
             description: None,
             headers: HashMap::new(),
             request_type: RequestType::GET,
@@ -45,9 +45,9 @@ impl Asset {
         }
     }
 
-    pub fn by_url(url: &str) -> Self {
+    pub fn by_url(url: Url) -> Self {
         Self {
-            url: url.to_string(),
+            url,
             name: None,
             description: None,
             headers: HashMap::new(),

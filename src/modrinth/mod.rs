@@ -1,128 +1,118 @@
-use async_trait::async_trait;
-use dotium::{
+pub mod converters;
+
+use crate::{
     project::{Author, Project},
     request::Asset,
     version::Version,
-    DotiumTrait, Platform,
+    Container, Platform,
 };
+use async_trait::async_trait;
 use ferinth::Ferinth;
 
-pub mod converters;
+pub type ID = String;
 
-pub(crate) type Result<T> = std::result::Result<T, ferinth::Error>;
-pub(crate) type TraitResult<T> =
-    std::result::Result<T, Box<(dyn std::error::Error + Send + 'static)>>;
-
-pub fn box_err<T>(result: Result<T>) -> TraitResult<T> {
-    match result {
-        Ok(i) => Ok(i),
-        Err(i) => Err(Box::new(i)),
-    }
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("{}", .0)]
+    FerinthError(#[from] ferinth::Error),
+    #[error("{}", .0)]
+    Unimplemented(#[from] crate::UnimplementedError),
 }
 
-pub struct ModrinthImpl {
+#[derive(Default)]
+pub struct ModrinthContainer {
     ferinth: Ferinth,
 }
 
 #[async_trait]
-impl DotiumTrait for ModrinthImpl {
+impl Container<Error, ID> for ModrinthContainer {
     fn new() -> Self {
-        Self {
-            ferinth: Ferinth::default(),
-        }
+        Self::default()
     }
 
     fn get_platform() -> Platform {
         Platform {
-            name: "Modrinth".to_string(),
-            short_name: "Mr".to_string(),
+            name: "Modrinth".into(),
+            short_name: "mr".into(),
             logo: Asset::by_description(
-                "https://github.com/modrinth/knossos/blob/master/assets/images/logo.svg",
-                "logo.svg",
-                "Full Modrinth platform logo",
+                url::Url::parse(
+                    "https://github.com/modrinth/knossos/blob/master/assets/images/logo.svg",
+                )
+                .expect("URL parsing of a constant has unexpectedly failed!"),
+                Some("logo.svg".into()),
+                Some("Modrinth platform logo".into()),
             ),
         }
     }
 
-    async fn get_project(&self, id: &str) -> TraitResult<Project> {
-        Ok(converters::project(box_err(
-            self.ferinth.get_project(id).await,
-        )?))
+    async fn get_project(&self, id: &ID) -> Result<Project<ID>, Error> {
+        Ok(self.ferinth.get_project(id).await.map(Into::into)?)
     }
 
-    async fn get_projects(&self, ids: Vec<&str>) -> TraitResult<Vec<dotium::project::Project>> {
-        Ok(box_err(self.ferinth.get_multiple_projects(&ids).await)?
+    async fn get_projects(&self, ids: Vec<&ID>) -> Result<Vec<Project<ID>>, Error> {
+        Ok(self
+            .ferinth
+            .get_multiple_projects(
+                &ids.into_iter()
+                    .map(|string| string as &str)
+                    .collect::<Vec<_>>(),
+            )
+            .await?
             .into_iter()
-            .map(|p| converters::project(p))
+            .map(Into::into)
             .collect())
     }
 
-    async fn get_project_body(&self, project_id: &str) -> TraitResult<String> {
-        Ok(box_err(self.ferinth.get_project(project_id).await)?.body)
+    async fn get_project_body(&self, project_id: &ID) -> Result<String, Error> {
+        Ok(self.ferinth.get_project(project_id).await?.body)
     }
 
-    async fn get_project_authors(&self, team_id: &str) -> TraitResult<Vec<Author>> {
-        Ok(box_err(self.ferinth.list_team_members(team_id).await)?
+    async fn get_project_authors(&self, team_id: &ID) -> Result<Vec<Author<ID>>, Error> {
+        Ok(self
+            .ferinth
+            .list_team_members(team_id)
+            .await?
             .into_iter()
-            .map(|a| converters::author(a.user))
+            .map(|a| a.user.into())
             .collect())
     }
 
     async fn get_project_dependencies(
         &self,
-        project_id: &str,
-    ) -> TraitResult<(Vec<Project>, Vec<Version>)> {
-        let raw = box_err(self.ferinth.get_project_dependencies(&project_id).await)?;
+        project_id: &ID,
+    ) -> Result<(Vec<Project<ID>>, Vec<Version<ID>>), Error> {
+        let raw = self.ferinth.get_project_dependencies(project_id).await?;
         Ok((
-            raw.projects
-                .iter()
-                .map(|i| converters::project(i.clone()))
-                .collect(),
-            raw.versions
-                .iter()
-                .map(|i| converters::version(i.clone()))
-                .collect(),
+            raw.projects.into_iter().map(Into::into).collect(),
+            raw.versions.into_iter().map(Into::into).collect(),
         ))
     }
 
-    async fn get_project_version(
-        &self,
-        _: &str,
-        id: &str,
-    ) -> TraitResult<dotium::version::Version> {
-        Ok(converters::version(box_err(
-            self.ferinth.get_version(id).await,
-        )?))
+    async fn get_versions(&self, ids: Vec<(&ID, &ID)>) -> Result<Vec<Version<ID>>, Error> {
+        Ok(self
+            .ferinth
+            .get_multiple_versions(
+                &ids.into_iter()
+                    .map(|(_, string)| string as &str)
+                    .collect::<Vec<_>>(),
+            )
+            .await?
+            .into_iter()
+            .map(Into::into)
+            .collect::<Vec<_>>())
     }
 
-    async fn get_versions(&self, project_id: &str) -> TraitResult<Vec<dotium::version::Version>> {
-        Ok(box_err(self.ferinth.list_versions(&project_id).await)?
+    async fn get_project_versions(&self, project_id: &ID) -> Result<Vec<Version<ID>>, Error> {
+        Ok(self
+            .ferinth
+            .list_versions(project_id)
+            .await?
             .into_iter()
-            .map(|v| converters::version(v))
+            .map(Into::into)
             .collect())
     }
 
-    async fn search(
-        &self,
-        _query: &str,
-        _project_type: Option<&str>,
-        _mc_version: Vec<&str>,
-        _modloader: &str,
-        _category: &str,
-    ) -> TraitResult<Vec<dotium::project::Project>> {
-        Err(Box::new(dotium::Error::Unimplemented))
-    }
-
-    async fn get_project_versions(
-        &self,
-        ids: Vec<(&str, &str)>,
-    ) -> TraitResult<Vec<dotium::version::Version>> {
-        let mut deps = Vec::new();
-        for id in ids {
-            deps.push(converters::version(box_err(
-                self.ferinth.get_version(id.1).await,
-            )?));
-        }
-        Ok(deps)
+    async fn get_version(&self, _: &ID, id: &ID) -> Result<Version<ID>, Error> {
+        Ok(self.ferinth.get_version(id).await?.into())
     }
 }

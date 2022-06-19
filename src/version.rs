@@ -1,6 +1,5 @@
-use crate::request::Asset;
-
 use super::*;
+use crate::request::Asset;
 
 /// Version of a project
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -53,12 +52,12 @@ pub enum DependencyType {
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum ModLoader {
-    Quilt,
+    Modloader,
+    Unknown,
     Fabric,
+    Quilt,
     Forge,
     Rift,
-    Modloader,
-    Unkown,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]

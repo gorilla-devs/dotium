@@ -1,173 +1,178 @@
-use crate::{project, version};
+use super::ID;
+use crate::{project, request, version};
 use ferinth::structures::*;
 
-impl Into<project::Project> for project_structs::Project {
-    fn into(project: project_structs::Project) -> project::Project {
+impl From<project_structs::Project> for project::Project<ID> {
+    fn from(from: project_structs::Project) -> Self {
         project::Project {
-            id: project.id,
-            slug: project.slug,
-            project_type: project.project_type.into(),
-            name: project.title,
-            description: project.description,
+            id: from.id,
+            slug: from.slug,
+            project_type: from.project_type.into(),
+            name: from.title,
+            description: from.description,
             links: project::Links {
-                github: project.source_url,
-                issues: project.issues_url,
-                wiki: project.wiki_url,
-                discord: project.discord_url,
-                donations: project
-                    .donation_urls
-                    .into_iter()
-                    .map(|thing|)
-                    .and_then(|i| Some(i.into_iter().map(|d| donation_url(d)).collect())),
+                github: from.source_url,
+                issues: from.issues_url,
+                wiki: from.wiki_url,
+                discord: from.discord_url,
+                donations: from.donation_urls.into_iter().map(Into::into).collect(),
             },
             requirements: project::ProjectRequirements {
-                server: project_support(project.server_side),
-                client: project_support(project.client_side),
+                server: from.server_side.into(),
+                client: from.client_side.into(),
             },
-            categories: project.categories,
-            downloads: project.downloads,
-            followers: project.followers,
-            icon: project
-                .icon_url
-                .and_then(|i| Some(Asset::by_url(i.as_str()))),
-            status: status(project.status),
-            published: project.published,
-            updated: project.updated,
-            created: project.published,
-            gallery: project
-                .gallery
-                .into_iter()
-                .map(|i| gallery_item(i))
-                .collect(),
-            allows_distribution: project.license.id != "custom".to_string()
-                && project.license.id != "arr".to_string(),
-            team_id: project.team,
+            categories: from.categories,
+            downloads: from.downloads,
+            followers: from.followers,
+            icon: from.icon_url.map(request::Asset::by_url),
+            status: from.status.into(),
+            published: from.published,
+            updated: from.updated,
+            created: from.published,
+            gallery: from.gallery.into_iter().map(Into::into).collect(),
+            allows_distribution: &from.license.id != "custom" && &from.license.id != "arr",
         }
     }
 }
 
-// pub fn version(raw: version_structs::Version) -> version::Version {
-//     version::Version {
-//         id: raw.id,
-//         name: raw.name,
-//         identifier: raw.version_number,
-//         project_id: raw.project_id,
-//         files: raw
-//             .files
-//             .into_iter()
-//             .map(|f| Asset {
-//                 url: f.url,
-//                 name: Some(f.filename),
-//                 description: None,
-//                 headers: std::collections::HashMap::new(),
-//                 request_type: dotium::request::RequestType::GET,
-//                 hash: Some(AssetHash {
-//                     hash: f.hashes.sha512.unwrap(), // TODO edit in Ferinth, modrinth generated hashes for old projects
-//                     algorithm: dotium::request::HashAlgorithm::Sha512,
-//                 }),
-//                 size: Some(f.size.try_into().unwrap_or_default()), //TODO Edit in Ferinth
-//             })
-//             .collect(),
-//         downloads: raw.downloads,
-//         loaders: raw.loaders.iter().map(|l| mod_loader(l.as_str())).collect(),
-//         game_versions: raw.game_versions,
-//         published: raw.date_published,
-//         version_type: version_type(raw.version_type),
-//         dependencies: raw
-//             .dependencies
-//             .into_iter()
-//             .map(|d| version::VersionDependency {
-//                 project_id: d.project_id,
-//                 version: d.version_id,
-//                 dependency_type: dependency_type(d.dependency_type),
-//             })
-//             .collect(),
-//     }
-// }
+impl From<version_structs::Version> for version::Version<ID> {
+    fn from(from: version_structs::Version) -> Self {
+        Self {
+            id: from.id,
+            name: from.name,
+            identifier: from.version_number,
+            project_id: from.project_id,
+            files: from.files.into_iter().map(Into::into).collect(),
+            downloads: from.downloads,
+            loaders: from
+                .loaders
+                .into_iter()
+                .map(|loader| version::ModLoader::from(loader.as_ref()))
+                .collect(),
+            game_versions: from.game_versions,
+            published: from.date_published,
+            version_type: from.version_type.into(),
+            dependencies: from.dependencies.into_iter().map(Into::into).collect(),
+        }
+    }
+}
 
-// pub fn author(raw: user_structs::User) -> project::Author {
-//     Author {
-//         username: raw.username.clone(),
-//         name: raw.name.unwrap_or(raw.username),
-//         id: raw.id,
-//         avatar_url: Some(Asset::by_url(raw.avatar_url.as_str())),
-//     }
-// }
+impl From<version_structs::VersionFile> for request::Asset {
+    fn from(from: version_structs::VersionFile) -> Self {
+        Self {
+            url: from.url,
+            name: Some(from.filename),
+            description: None,
+            headers: std::collections::HashMap::new(),
+            request_type: request::RequestType::GET,
+            hash: Some(request::AssetHash {
+                hash: from.hashes.sha512,
+                algorithm: request::HashAlgorithm::SHA512,
+            }),
+            size: Some(from.size),
+        }
+    }
+}
 
-// pub fn dependency_type(raw: version_structs::DependencyType) -> version::DependencyType {
-//     match raw {
-//         version_structs::DependencyType::Required => version::DependencyType::RequiredDependency,
-//         version_structs::DependencyType::Optional => version::DependencyType::OptionalDependency,
-//         version_structs::DependencyType::Incompatible => version::DependencyType::Incompatible,
-//     }
-// }
+impl From<version_structs::Dependency> for version::VersionDependency<ID> {
+    fn from(from: version_structs::Dependency) -> Self {
+        Self {
+            project_id: from.project_id,
+            version: from.version_id,
+            dependency_type: from.dependency_type.into(),
+        }
+    }
+}
 
-impl Into<project::ProjectType> for project_structs::ProjectType {
-    fn into(self) -> project::ProjectType {
-        match self {
+impl From<user_structs::User> for project::Author<ID> {
+    fn from(from: user_structs::User) -> Self {
+        Self {
+            username: from.username,
+            name: from.name,
+            id: from.id,
+            avatar_url: Some(request::Asset::by_url(from.avatar_url)),
+        }
+    }
+}
+
+impl From<version_structs::DependencyType> for version::DependencyType {
+    fn from(from: version_structs::DependencyType) -> Self {
+        match from {
+            version_structs::DependencyType::Required => Self::RequiredDependency,
+            version_structs::DependencyType::Optional => Self::OptionalDependency,
+            version_structs::DependencyType::Incompatible => Self::Incompatible,
+        }
+    }
+}
+
+impl From<project_structs::ProjectType> for project::ProjectType {
+    fn from(from: project_structs::ProjectType) -> Self {
+        match from {
             project_structs::ProjectType::Mod => project::ProjectType::Mod,
             project_structs::ProjectType::Modpack => project::ProjectType::Modpack,
         }
     }
 }
 
-// pub fn version_type(raw: version_structs::VersionType) -> version::VersionType {
-//     match raw {
-//         version_structs::VersionType::Alpha => version::VersionType::Alpha,
-//         version_structs::VersionType::Beta => version::VersionType::Beta,
-//         version_structs::VersionType::Release => version::VersionType::Release,
-//     }
-// }
-
-// pub fn mod_loader(raw: &str) -> version::ModLoader {
-//     match raw {
-//         "quilt" => version::ModLoader::Quilt,
-//         "fabric" => version::ModLoader::Fabric,
-//         "forge" => version::ModLoader::Forge,
-//         "rift" => version::ModLoader::Rift,
-//         "modloader" => version::ModLoader::Modloader,
-//         _ => version::ModLoader::Unkown,
-//     }
-// }
-
-// pub fn project_support(raw: project_structs::ProjectSupportRange) -> project::Requirement {
-//     match raw {
-//         project_structs::ProjectSupportRange::Required => project::Requirement::Required,
-//         project_structs::ProjectSupportRange::Optional => project::Requirement::Optional,
-//         project_structs::ProjectSupportRange::Unsupported => project::Requirement::Unsupported,
-//     }
-// }
-
-// pub fn status(raw: project_structs::ProjectStatus) -> project::Status {
-//     match raw {
-//         project_structs::ProjectStatus::Approved => project::Status::Approved,
-//         project_structs::ProjectStatus::Rejected => project::Status::Rejected,
-//         project_structs::ProjectStatus::Draft => project::Status::New,
-//         project_structs::ProjectStatus::Unlisted => project::Status::Unlisted,
-//         project_structs::ProjectStatus::Archived => project::Status::Abandoned,
-//         project_structs::ProjectStatus::Processing => project::Status::UnderReview,
-//         project_structs::ProjectStatus::Unknown => project::Status::Deleted,
-//     }
-// }
-
-impl Into<project::DonationLink> for project_structs::DonationLink {
-    fn into(self) -> project::DonationLink {
-        project::DonationLink {
-            platform: self.platform,
-            url: self.url,
-            id: self.id,
+impl From<version_structs::VersionType> for version::VersionType {
+    fn from(from: version_structs::VersionType) -> Self {
+        match from {
+            version_structs::VersionType::Alpha => Self::Alpha,
+            version_structs::VersionType::Beta => Self::Beta,
+            version_structs::VersionType::Release => Self::Release,
         }
     }
 }
 
-// pub fn gallery_item(raw: project_structs::GalleryItem) -> Asset {
-//     Asset {
-//         url: raw.url,
-//         name: raw.title,
-//         description: raw.description,
-//         headers: std::collections::HashMap::new(),
-//         request_type: dotium::request::RequestType::GET,
-//         hash: None,
-//         size: None,
-//     }
-// }
+impl From<&str> for version::ModLoader {
+    fn from(from: &str) -> Self {
+        match from.to_lowercase().as_str() {
+            "modloader" => Self::Modloader,
+            "fabric" => Self::Fabric,
+            "quilt" => Self::Quilt,
+            "forge" => Self::Forge,
+            "rift" => Self::Rift,
+            _ => Self::Unknown,
+        }
+    }
+}
+
+impl From<project_structs::ProjectSupportRange> for project::Requirement {
+    fn from(from: project_structs::ProjectSupportRange) -> Self {
+        match from {
+            project_structs::ProjectSupportRange::Required => Self::Required,
+            project_structs::ProjectSupportRange::Optional => Self::Optional,
+            project_structs::ProjectSupportRange::Unsupported => Self::Unsupported,
+        }
+    }
+}
+
+impl From<project_structs::ProjectStatus> for project::Status {
+    fn from(from: project_structs::ProjectStatus) -> Self {
+        match from {
+            project_structs::ProjectStatus::Approved => Self::Approved,
+            project_structs::ProjectStatus::Rejected => Self::Rejected,
+            project_structs::ProjectStatus::Draft => Self::New,
+            project_structs::ProjectStatus::Unlisted => Self::Unlisted,
+            project_structs::ProjectStatus::Archived => Self::Abandoned,
+            project_structs::ProjectStatus::Processing => Self::UnderReview,
+            project_structs::ProjectStatus::Unknown => Self::Unknown,
+        }
+    }
+}
+
+impl From<project_structs::DonationLink> for project::DonationLink {
+    fn from(from: project_structs::DonationLink) -> Self {
+        Self {
+            platform: from.platform,
+            url: from.url,
+            id: from.id,
+        }
+    }
+}
+
+impl From<project_structs::GalleryItem> for request::Asset {
+    fn from(from: project_structs::GalleryItem) -> Self {
+        Self::by_description(from.url, from.title, from.description)
+    }
+}

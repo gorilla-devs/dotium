@@ -1,4 +1,5 @@
 use super::*;
+use url::Url;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Project<ID> {
@@ -40,17 +41,15 @@ pub struct Project<ID> {
     /// If the project allows for distribution
     /// Modrinth: Depends on license
     pub allows_distribution: bool,
-    /// Team id of the project's team
-    /// CurseForge: Project ID, as authors are included in the project
-    pub team_id: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum ProjectType {
     Mod,
     Modpack,
-    Ressourcepack,
+    ResourcePack,
     Shader,
+    World,
     Addon,
     Plugin,
 }
@@ -58,13 +57,13 @@ pub enum ProjectType {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Links {
     /// GitHub page
-    pub github: Option<String>,
+    pub github: Option<Url>,
     /// Issue tracker
-    pub issues: Option<String>,
+    pub issues: Option<Url>,
     /// Wiki page
-    pub wiki: Option<String>,
+    pub wiki: Option<Url>,
     /// Discord invite
-    pub discord: Option<String>,
+    pub discord: Option<Url>,
     /// Donation platforms
     pub donations: Vec<DonationLink>,
 }
@@ -76,7 +75,7 @@ pub struct DonationLink {
     /// The platform name
     pub platform: String,
     /// The link to the donations page
-    pub url: String,
+    pub url: Url,
 }
 
 /// Requirements of a project, for server and client
@@ -101,36 +100,27 @@ pub enum Requirement {
 // We should combine some of these (e.g. Abandoned & Inactive)
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum Status {
-    /// Modrinth: Draft
+    /// Hasn't been reviewed yet
     New,
-    /// Modrinth only
+    /// Hidden to things like search
     Unlisted,
-    /// CurseForge only
+    /// Changes were requested by reviewers
     ChangesRequired,
-    /// CurseForge only
-    UnderSoftReview,
-    /// Modrinth: Approved
     Approved,
-    /// Modrinth: Rejected
     Rejected,
-    /// CurseForge only
-    ChangesMade,
-    /// CurseForge only
-    Inactive,
-    /// Modrinth: Archived
     Abandoned,
-    /// Modrinth: Unkown
     Deleted,
-    /// Modrinth: Processing
+    /// Currently under review
     UnderReview,
+    Unknown,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Author<ID> {
-    /// The unique username of the user
-    pub username: String,
     /// The display name of the user
-    pub name: String,
+    pub name: Option<String>,
+    /// The username of the user
+    pub username: String,
     // The ID of the user
     pub id: ID,
     /// The user's avatar
